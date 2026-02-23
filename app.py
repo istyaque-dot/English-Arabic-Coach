@@ -2,14 +2,13 @@ import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
 import base64
-import os
 
 # 1. API Key Setup
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=API_KEY)
-    # Latest model use kar rahe hain taaki NotFound error na aaye
-    model = genai.GenerativeModel(model_name="gemini-pro")
+    # Is baar hum simple version use karenge jo 404 nahi dega
+    model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 except Exception as e:
     st.error(f"Setup Error: {e}")
 
@@ -27,10 +26,9 @@ def speak(text, lang='en'):
         st.write("Audio error:", e)
 
 # 3. App UI
-st.set_page_config(page_title="AI Fluency Coach", page_icon="🗣️")
-st.title("🗣️ AI Fluency Coach")
+st.title("🗣️ AI Mastery Coach")
 
-language = st.sidebar.radio("Sikhne wali zubaan (Language):", ("English", "Arabic"))
+language = st.sidebar.radio("Language:", ("English", "Arabic"))
 lang_code = 'en' if language == "English" else 'ar'
 
 if "messages" not in st.session_state:
@@ -40,7 +38,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 4. Input & Logic
+# 4. Chat Logic
 user_input = st.chat_input(f"Talk to me in {language}...")
 
 if user_input:
@@ -48,16 +46,12 @@ if user_input:
     with st.chat_message("user"):
         st.write(user_input)
     
-    prompt = f"Act as a friendly {language} teacher. User said: '{user_input}'. Reply naturally, correct mistakes, and suggest 2 better words. Keep it short."
+    # Simple reply logic
+    response = model.generate_content(user_input)
+    bot_reply = response.text
     
-    try:
-        response = model.generate_content(prompt)
-        bot_reply = response.text
-        
-        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-        with st.chat_message("assistant"):
-            st.markdown(bot_reply)
-        
-        speak(bot_reply, lang=lang_code)
-    except Exception as e:
-        st.error(f"AI Error: {e}")
+    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+    with st.chat_message("assistant"):
+        st.markdown(bot_reply)
+    
+    speak(bot_reply, lang=lang_code)
