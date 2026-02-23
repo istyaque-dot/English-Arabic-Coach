@@ -1,4 +1,5 @@
 google-generativeai>=0.8.3
 streamlit
 gTTS
-streamlit-mic-recorder
+streamlit-webrtc
+aiortc
