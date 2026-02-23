@@ -10,9 +10,9 @@ try:
     genai.configure(api_key=API_KEY)
     model = genai.GenerativeModel('gemini-2.5-flash')
 except Exception as e:
-    st.error("Setup Error!")
+    st.error("Setup Error! Check API Key.")
 
-# 2. Audio Out Function (AI ki awaaz)
+# 2. Audio Out Function (AI Reply)
 def speak(text, lang='en'):
     try:
         tts = gTTS(text=text, lang=lang)
@@ -23,29 +23,35 @@ def speak(text, lang='en'):
     except:
         pass
 
-# 3. Simple UI
-st.title("🗣️ Ishtyaque Bhai's Voice Coach")
+# 3. UI Section
+st.title("🗣️ Ishtyaque Bhai's English-Arabic Coach")
+st.write("Jamnagar to Global Mastery")
+
 language = st.sidebar.radio("Zubaan chunein:", ("English", "Arabic"))
 lang_code = 'en' if language == "English" else 'ar'
 
 # Mike Input Section
-st.write("Mike dabayein aur bolein:")
-audio_input = mic_recorder(start_prompt="🎤 Bolna shuru karein", stop_prompt="🛑 Rukiye", key='recorder')
+st.subheader("🎤 Speak or Type")
+audio = mic_recorder(
+    start_prompt="🎤 Mike On (Click to Speak)",
+    stop_prompt="🛑 Stop (Click to Finish)",
+    key='recorder'
+)
 
-user_input = ""
-if audio_input:
-    # Voice to Text conversion check (Optional placeholder for transcription)
-    # Abhi ke liye hum chat input ko hi main rakhte hain jab tak voice logic fully set na ho
-    pass
+# Agar Mike se kuch record hua
+if audio:
+    st.audio(audio['bytes'])
+    st.info("Awaaz record ho gayi hai! Abhi ke liye AI text input par behtar kaam karta hai. Niche box mein type karein.")
 
-chat_input = st.chat_input(f"Ya yahan {language} mein likhein...")
-final_input = chat_input # Filhaal typing se hi AI ko input dete hain
+# Text Input (Main Chat)
+user_input = st.chat_input(f"{language} mein likhein...")
 
-if final_input:
+if user_input:
     with st.chat_message("user"):
-        st.write(final_input)
+        st.write(user_input)
     
-    prompt = f"Act as a simple {language} coach. User said: '{final_input}'. If there is a mistake, correct it in 1 VERY SHORT sentence. If no mistake, just reply naturally in 5-6 words. No hard words."
+    # Simple Prompt
+    prompt = f"Simple coach: Correct mistakes in '{user_input}'. Reply in 1 short sentence. No hard words."
     
     try:
         response = model.generate_content(prompt)
@@ -56,4 +62,4 @@ if final_input:
         
         speak(bot_reply, lang=lang_code)
     except:
-        st.error("AI connection error.")
+        st.error("AI Busy!")
