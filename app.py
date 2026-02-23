@@ -3,55 +3,39 @@ import google.generativeai as genai
 from gtts import gTTS
 import base64
 
-# 1. API Key Setup
+# 1. Setup
 try:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
     genai.configure(api_key=API_KEY)
-    # Is baar hum simple version use karenge jo 404 nahi dega
-    model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
-    st.error(f"Setup Error: {e}")
+    st.error("API Key missing or error!")
 
-# 2. Voice Function
-def speak(text, lang='en'):
-    try:
-        tts = gTTS(text=text, lang=lang)
-        tts.save("response.mp3")
-        with open("response.mp3", "rb") as f:
-            data = f.read()
-            b64 = base64.b64encode(data).decode()
-            md = f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">'
-            st.markdown(md, unsafe_allow_html=True)
-    except Exception as e:
-        st.write("Audio error:", e)
+# 2. UI Layout
+st.title("🗣️ Ishtyaque Bhai's Mastery Coach")
+st.write("Jamnagar to Global: Learn English & Arabic")
 
-# 3. App UI
-st.title("🗣️ AI Mastery Coach")
+option = st.sidebar.selectbox("Kaunsi zubaan sikhni hai?", ("English", "Arabic"))
+lang_code = 'en' if option == "English" else 'ar'
 
-language = st.sidebar.radio("Language:", ("English", "Arabic"))
-lang_code = 'en' if language == "English" else 'ar'
+# 3. Chat Logic
+user_text = st.chat_input(f"Talk to me in {option}...")
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-
-# 4. Chat Logic
-user_input = st.chat_input(f"Talk to me in {language}...")
-
-if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
+if user_text:
     with st.chat_message("user"):
-        st.write(user_input)
+        st.write(user_text)
     
-    # Simple reply logic
-    response = model.generate_content(user_input)
-    bot_reply = response.text
+    # AI Logic
+    prompt = f"Teacher mode: User said '{user_text}'. Reply in {option}, correct mistakes, and give 1 better word."
+    response = model.generate_content(prompt)
+    reply = response.text
     
-    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
     with st.chat_message("assistant"):
-        st.markdown(bot_reply)
-    
-    speak(bot_reply, lang=lang_code)
+        st.write(reply)
+        
+        # Voice Output
+        tts = gTTS(text=reply, lang=lang_code)
+        tts.save("voice.mp3")
+        with open("voice.mp3", "rb") as f:
+            data = base64.b64encode(f.read()).decode()
+            st.markdown(f'<audio autoplay="true" src="data:audio/mp3;base64,{data}">', unsafe_allow_html=True)
